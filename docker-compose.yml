@@ -1,0 +1,42 @@
+services:
+  zookeeper:
+    image: zookeeper:3.9.3
+    container_name: zookeeper
+    restart: always
+
+  nimbus:
+    image: storm:latest
+    container_name: nimbus
+    hostname: nimbus
+    command: storm nimbus
+    depends_on:
+      - zookeeper
+    restart: always
+
+  supervisor:
+    image: storm:latest
+    container_name: supervisor
+    command: storm supervisor -c worker.childopts=-Xmx%HEAP-MEM%m
+    volumes:
+      - ./data:/data/warc
+    depends_on:
+      - nimbus
+      - zookeeper
+    restart: always
+
+  ui:
+    image: storm:latest
+    container_name: ui
+    command: storm ui
+    depends_on:
+      - nimbus
+    restart: always
+    ports:
+      - "127.0.0.1:8080:8080"
+
+  urlfrontier:
+    image: crawlercommons/url-frontier:latest
+    container_name: urlfrontier
+    restart: always
+    ports:
+      - "127.0.0.1:7071:7071"
