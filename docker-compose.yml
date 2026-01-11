@@ -4,6 +4,27 @@ services:
     container_name: zookeeper
     restart: always
 
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: crawl
+      MYSQL_USER: crawler
+      MYSQL_PASSWORD: crawler
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   nimbus:
     image: storm:latest
     container_name: nimbus
@@ -17,11 +38,10 @@ services:
     image: storm:latest
     container_name: supervisor
     command: storm supervisor -c worker.childopts=-Xmx%HEAP-MEM%m
-    volumes:
-      - ./data:/data/warc
     depends_on:
       - nimbus
       - zookeeper
+      - mysql
     restart: always
 
   ui:
@@ -40,3 +60,6 @@ services:
     restart: always
     ports:
       - "127.0.0.1:7071:7071"
+
+volumes:
+  mysql_data:

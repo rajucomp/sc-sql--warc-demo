@@ -25,13 +25,13 @@ under the License.
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.example</groupId>
-	<artifactId>stormcrawler-warc</artifactId>
+	<artifactId>stormcrawler-sql</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<stormcrawler.version>3.5.0</stormcrawler.version>
+		<stormcrawler.version>3.5.1-SNAPSHOT</stormcrawler.version>
 		<storm.version>2.8.2</storm.version>
 		<urlfrontier.version>2.4</urlfrontier.version>
 	</properties>
@@ -151,8 +151,13 @@ under the License.
 		</dependency>
 		<dependency>
 			<groupId>org.apache.stormcrawler</groupId>
-			<artifactId>stormcrawler-warc</artifactId>
+			<artifactId>stormcrawler-sql</artifactId>
 			<version>${stormcrawler.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<version>8.2.0</version>
 		</dependency>
 	</dependencies>
 </project>

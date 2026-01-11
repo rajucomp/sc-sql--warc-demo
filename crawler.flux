@@ -1,72 +1,16 @@
-name: "warc-crawler"
+name: "sql-crawler"
 
 includes:
     - resource: true
       file: "/crawler-default.yaml"
       override: false
 
-    - resource: false
-      file: "crawler-conf.yaml"
+    - resource: true
+      file: "/crawler-conf.yaml"
       override: true
 
-config:
-  # use RawLocalFileSystem (instead of ChecksumFileSystem) to avoid that
-  # WARC files are truncated if the topology is stopped because of a
-  # delayed sync of the default ChecksumFileSystem
-  warc: {"fs.file.impl": "org.apache.hadoop.fs.RawLocalFileSystem"}
-
-components:
-  - id: "WARCFileNameFormat"
-    className: "org.apache.stormcrawler.warc.WARCFileNameFormat"
-    configMethods:
-      - name: "withPath"
-        args:
-          - "/data/warc"
-      - name: "withPrefix"
-        args:
-          - "DEMO"
-  - id: "WARCFileRotationPolicy"
-    className: "org.apache.storm.hdfs.bolt.rotation.FileSizeRotationPolicy"
-    constructorArgs:
-      - 50.0
-      - MB
-  - id: "WARCInfo"
-    className: "java.util.LinkedHashMap"
-    configMethods:
-      - name: "put"
-        args:
-         - "software"
-         - "StormCrawler 3.5.0"
-      - name: "put"
-        args:
-         - "description"
-         - "Crawling Crawling"
-      - name: "put"
-        args:
-         - "http-header-user-agent"
-         - "... Please insert your user-agent name"
-      - name: "put"
-        args:
-         - "http-header-from"
-         - "..."
-      - name: "put"
-        args:
-         - "operator"
-         - "..."
-      - name: "put"
-        args:
-         - "robots"
-         - "..."
-      - name: "put"
-        args:
-         - "format"
-         - "WARC File Format 1.1"
-      - name: "put"
-        args:
-         - "conformsTo"
-         - "https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1/"
-
 spouts:
+  # Use URLFrontier spout for URL scheduling (primary source)
   - id: "spout"
     className: "org.apache.stormcrawler.urlfrontier.Spout"
     parallelism: 1
@@ -90,22 +34,9 @@ bolts:
   - id: "index"
     className: "org.apache.stormcrawler.indexing.StdOutIndexer"
     parallelism: 1
-  - id: "warc"
-    className: "org.apache.stormcrawler.warc.WARCHdfsBolt"
-    parallelism: 1
-    configMethods:
-      - name: "withFileNameFormat"
-        args:
-          - ref: "WARCFileNameFormat"
-      - name: "withRotationPolicy"
-        args:
-          - ref: "WARCFileRotationPolicy"
-      - name: "withRequestRecords"
-      - name: "withHeader"
-        args:
-          - ref: "WARCInfo"
+  # SQL StatusUpdaterBolt - persists URL status to MySQL database
   - id: "status"
-    className: "org.apache.stormcrawler.urlfrontier.StatusUpdaterBolt"
+    className: "org.apache.stormcrawler.sql.StatusUpdaterBolt"
     parallelism: 1
 
 streams:
@@ -136,7 +67,7 @@ streams:
       type: LOCAL_OR_SHUFFLE
 
   - from: "parse"
-    to: "warc"
+    to: "index"
     grouping:
       type: LOCAL_OR_SHUFFLE
 
